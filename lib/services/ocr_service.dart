@@ -63,25 +63,57 @@ class OCRService {
 
     final lines = text.split('\n');
 
-    // Strategy 1: Find amounts near keywords (check multiple nearby lines)
+    // Strategy 1: Look for "Taka Only" pattern first (highest confidence)
+    if (text.toLowerCase().contains('taka only') || text.toLowerCase().contains('টাকা মাত্র')) {
+      print('Found "Taka Only" pattern');
+      final allNumbers = _extractNumbers(text);
+      print('All numbers extracted: $allNumbers');
+
+      // Get frequency of each amount
+      final frequency = <double, int>{};
+      for (final amount in allNumbers) {
+        if (amount >= 10.0 && amount < 100000) {
+          frequency[amount] = (frequency[amount] ?? 0) + 1;
+        }
+      }
+
+      print('Amount frequencies: $frequency');
+
+      // Return most frequent amount
+      if (frequency.isNotEmpty) {
+        final mostCommon = frequency.entries
+            .reduce((a, b) => a.value > b.value ? a : b)
+            .key;
+        print('Most common amount: $mostCommon');
+        return mostCommon;
+      }
+    }
+
+    // Strategy 2: Find amounts near keywords (but validate them)
     for (int i = 0; i < lines.length; i++) {
       final line = lines[i].toLowerCase();
       // Skip "VAT Amount" - it's not the total
       if (line.contains('vat') && !line.contains('amount')) continue;
 
       if (keywords.any((keyword) => line.contains(keyword))) {
+        print('Found keyword in line: ${lines[i]}');
+
         // Try current line first
         final numbers = _extractNumbers(lines[i]);
-        if (numbers.isNotEmpty) {
+        print('Numbers on keyword line: $numbers');
+
+        // Only return if it looks like a valid amount (not 123 from B123123)
+        if (numbers.isNotEmpty && numbers.any((n) => n >= 100 || n.toString().contains('.'))) {
           return numbers.reduce((a, b) => a > b ? a : b);
         }
 
-        // Check next 3 lines (for table-like structures where keyword is header)
-        for (int j = 1; j <= 3 && i + j < lines.length; j++) {
+        // Check next 5 lines (for table-like structures where keyword is header)
+        for (int j = 1; j <= 5 && i + j < lines.length; j++) {
           if (_looksLikeDate(lines[i + j])) continue;
 
           final nextNumbers = _extractNumbers(lines[i + j]);
           if (nextNumbers.isNotEmpty) {
+            print('Numbers $j lines after keyword: $nextNumbers');
             // Return largest amount found in nearby lines
             return nextNumbers.reduce((a, b) => a > b ? a : b);
           }
@@ -89,32 +121,27 @@ class OCRService {
       }
     }
 
-    // Strategy 2: Look for "One Thousand Taka Only" pattern and find nearest amount
-    if (text.toLowerCase().contains('taka only') || text.toLowerCase().contains('টাকা')) {
-      final allNumbers = _extractNumbers(text);
-      // Prefer amounts with decimals and > 10 (exclude small values like 0.00)
-      final validAmounts = allNumbers.where((n) => n >= 10.0 && n < 100000).toList();
-      if (validAmounts.isNotEmpty) {
-        validAmounts.sort((a, b) => b.compareTo(a));
-        return validAmounts.first;
-      }
-    }
-
-    // Strategy 3: Fallback - find most common reasonable amount
+    // Strategy 3: Fallback - find most common reasonable amount (frequency analysis)
     final allNumbers = _extractNumbers(text);
     final validAmounts = allNumbers.where((n) => n >= 1.0 && n < 1000000).toList();
+
     if (validAmounts.isNotEmpty) {
-      // Count frequency of amounts (in case same amount appears multiple times)
+      print('All valid amounts: $validAmounts');
+
+      // Count frequency of amounts
       final frequency = <double, int>{};
       for (final amount in validAmounts) {
         frequency[amount] = (frequency[amount] ?? 0) + 1;
       }
+
+      print('Frequency analysis: $frequency');
 
       // If one amount appears multiple times, it's likely the total
       if (frequency.values.any((count) => count >= 2)) {
         final mostCommon = frequency.entries
             .reduce((a, b) => a.value > b.value ? a : b)
             .key;
+        print('Returning most common: $mostCommon');
         return mostCommon;
       }
 
