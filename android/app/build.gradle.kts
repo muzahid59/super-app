@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.area59.ocr_app"
-    compileSdk = 34  // Updated to fix lStar resource issue
+    compileSdk = 36  // Updated for ML Kit compatibility
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -33,13 +33,10 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
 
-            // Enable ProGuard/R8 minification
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            // Disable minification to avoid ML Kit compatibility issues
+            // Can be enabled later after updating ML Kit dependencies
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
