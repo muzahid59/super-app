@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/camera_service.dart';
 
 class CameraCaptureScreen extends StatefulWidget {
@@ -68,6 +69,32 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     }
   }
 
+  Future<void> _pickFromGallery() async {
+    final ImagePicker picker = ImagePicker();
+
+    try {
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (!mounted) return;
+
+      if (image != null) {
+        Navigator.pushReplacementNamed(
+          context,
+          '/review',
+          arguments: {'imagePath': image.path},
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: $e')),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _cameraService.dispose();
@@ -81,6 +108,13 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         title: const Text('Capture Receipt'),
         backgroundColor: const Color(0xFF2196F3),
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.photo_library),
+            onPressed: _pickFromGallery,
+            tooltip: 'Pick from gallery',
+          ),
+        ],
       ),
       body: _errorMessage != null
           ? Center(

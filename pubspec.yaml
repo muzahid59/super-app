@@ -34,6 +34,9 @@ dependencies:
   # Camera
   camera: ^0.10.5+9
 
+  # Image Picker (for gallery selection)
+  image_picker: ^1.0.7
+
   # OCR
   google_mlkit_text_recognition: ^0.11.0
 
