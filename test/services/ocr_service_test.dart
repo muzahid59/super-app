@@ -102,5 +102,34 @@ void main() {
 
       expect(amount, 10000000.50);
     });
+
+    test('should extract amount from hospital receipt without being confused by dates', () {
+      const text = '''
+Bangladesh Eye Hospital Rajshahi Ltd.
+MONEY RECEIPT
+VAT Amount
+Date: 08-APR-2026
+One Thousand Taka Only
+1,000.00
+0.00
+''';
+
+      final amount = OCRService.extractTotalAmount(text);
+
+      expect(amount, 1000.00);
+    });
+
+    test('should extract merchant from hospital receipt skipping short OCR errors', () {
+      const text = '''
+LIVEv
+Bangladesh Eye Hospital Rajshahi Ltd.
+Name: MARIYAM
+PATIENT COPY
+''';
+
+      final merchant = OCRService.extractMerchantName(text);
+
+      expect(merchant, 'Bangladesh Eye Hospital Rajshahi Ltd.');
+    });
   });
 }
