@@ -48,13 +48,41 @@ class TransactionListScreen extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/capture');
-        },
-        backgroundColor: const Color(0xFF2196F3),
-        child: const Icon(Icons.camera_alt, color: Colors.white),
+      floatingActionButton: Stack(
+        children: [
+          // Manual entry button - bottom center
+          Positioned(
+            bottom: 16,
+            left: MediaQuery.of(context).size.width / 2 - 28,
+            child: FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/review',
+                  arguments: {'manualEntry': true},
+                );
+              },
+              heroTag: 'manualEntry',
+              backgroundColor: const Color(0xFF4CAF50),
+              child: const Icon(Icons.edit, color: Colors.white),
+            ),
+          ),
+          // Camera button - bottom right
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/capture');
+              },
+              heroTag: 'camera',
+              backgroundColor: const Color(0xFF2196F3),
+              child: const Icon(Icons.camera_alt, color: Colors.white),
+            ),
+          ),
+        ],
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

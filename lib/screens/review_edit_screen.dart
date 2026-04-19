@@ -44,6 +44,10 @@ class _ReviewEditScreenState extends State<ReviewEditScreen> {
       _imagePath = args['imagePath'] as String;
       _isEditMode = false;
       _performOCR();
+    } else if (args is Map<String, dynamic> && args.containsKey('manualEntry')) {
+      // Manual entry mode - no image, no OCR
+      _isEditMode = false;
+      _imagePath = null;
     } else if (args is Transaction) {
       _existingTransaction = args;
       _isEditMode = true;
