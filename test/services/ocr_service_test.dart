@@ -86,5 +86,21 @@ void main() {
 
       expect(date, null);
     });
+
+    test('should extract amounts with comma separators', () {
+      const text = 'Hospital Bill\nBill Amount: 1,000.00\nTotal: 1,000.00';
+
+      final amount = OCRService.extractTotalAmount(text);
+
+      expect(amount, 1000.00);
+    });
+
+    test('should extract large amounts with multiple commas', () {
+      const text = 'Store\nTotal: 10,000,000.50';
+
+      final amount = OCRService.extractTotalAmount(text);
+
+      expect(amount, 10000000.50);
+    });
   });
 }

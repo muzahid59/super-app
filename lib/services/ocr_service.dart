@@ -124,11 +124,16 @@ class OCRService {
 
   static List<double> _extractNumbers(String text) {
     final normalizedText = _normalizeBanglaNumbers(text);
-    final pattern = RegExp(r'\d+\.?\d*');
+    // Pattern matches numbers with optional commas and decimals: 1,000.00
+    final pattern = RegExp(r'\d+(?:,\d+)*(?:\.\d+)?');
     final matches = pattern.allMatches(normalizedText);
 
     return matches
-        .map((m) => double.tryParse(m.group(0)!))
+        .map((m) {
+          // Remove commas before parsing to double
+          final cleanNumber = m.group(0)!.replaceAll(',', '');
+          return double.tryParse(cleanNumber);
+        })
         .where((n) => n != null)
         .cast<double>()
         .toList();
