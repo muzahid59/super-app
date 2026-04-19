@@ -59,25 +59,30 @@ class OCRService {
   }
 
   static double? extractTotalAmount(String text) {
-    final keywords = ['total', 'টোটাল', 'মোট', 'bill amount', 'টাকা', 'taka'];
+    final keywords = ['total', 'টোটাল', 'মোট', 'bill amount', 'payable amount', 'টাকা', 'taka', 'cash paid'];
 
     final lines = text.split('\n');
 
-    // Strategy 1: Find amounts near keywords
+    // Strategy 1: Find amounts near keywords (check multiple nearby lines)
     for (int i = 0; i < lines.length; i++) {
       final line = lines[i].toLowerCase();
       // Skip "VAT Amount" - it's not the total
-      if (line.contains('vat')) continue;
+      if (line.contains('vat') && !line.contains('amount')) continue;
 
       if (keywords.any((keyword) => line.contains(keyword))) {
+        // Try current line first
         final numbers = _extractNumbers(lines[i]);
         if (numbers.isNotEmpty) {
           return numbers.reduce((a, b) => a > b ? a : b);
         }
-        // Only check next line if it doesn't look like a date
-        if (i + 1 < lines.length && !_looksLikeDate(lines[i + 1])) {
-          final nextNumbers = _extractNumbers(lines[i + 1]);
+
+        // Check next 3 lines (for table-like structures where keyword is header)
+        for (int j = 1; j <= 3 && i + j < lines.length; j++) {
+          if (_looksLikeDate(lines[i + j])) continue;
+
+          final nextNumbers = _extractNumbers(lines[i + j]);
           if (nextNumbers.isNotEmpty) {
+            // Return largest amount found in nearby lines
             return nextNumbers.reduce((a, b) => a > b ? a : b);
           }
         }
@@ -88,18 +93,32 @@ class OCRService {
     if (text.toLowerCase().contains('taka only') || text.toLowerCase().contains('টাকা')) {
       final allNumbers = _extractNumbers(text);
       // Prefer amounts with decimals and > 10 (exclude small values like 0.00)
-      final validAmounts = allNumbers.where((n) => n >= 10.0).toList();
+      final validAmounts = allNumbers.where((n) => n >= 10.0 && n < 100000).toList();
       if (validAmounts.isNotEmpty) {
-        // Return the most common "bill-like" amount (with 2 decimal places)
         validAmounts.sort((a, b) => b.compareTo(a));
         return validAmounts.first;
       }
     }
 
-    // Strategy 3: Fallback - find largest meaningful number
+    // Strategy 3: Fallback - find most common reasonable amount
     final allNumbers = _extractNumbers(text);
     final validAmounts = allNumbers.where((n) => n >= 1.0 && n < 1000000).toList();
     if (validAmounts.isNotEmpty) {
+      // Count frequency of amounts (in case same amount appears multiple times)
+      final frequency = <double, int>{};
+      for (final amount in validAmounts) {
+        frequency[amount] = (frequency[amount] ?? 0) + 1;
+      }
+
+      // If one amount appears multiple times, it's likely the total
+      if (frequency.values.any((count) => count >= 2)) {
+        final mostCommon = frequency.entries
+            .reduce((a, b) => a.value > b.value ? a : b)
+            .key;
+        return mostCommon;
+      }
+
+      // Otherwise return largest
       validAmounts.sort((a, b) => b.compareTo(a));
       return validAmounts.first;
     }
@@ -169,22 +188,34 @@ class OCRService {
 
   static List<double> _extractNumbers(String text) {
     final normalizedText = _normalizeBanglaNumbers(text);
+
     // Pattern matches numbers with commas/periods as thousand separators: 1,000.00 or 1.000,00
-    // Handles both US format (1,000.00) and European format (1.000,00)
-    final pattern = RegExp(r'\d{1,3}(?:[,\.]\d{3})*(?:[,\.]\d{1,2})?');
+    // Also matches simple numbers: 123.45, 1000
+    final pattern = RegExp(r'\d{1,3}(?:[,\.]\d{3})*(?:[,\.]\d{1,2})?|\d+\.?\d*');
     final matches = pattern.allMatches(normalizedText);
 
     final numbers = <double>[];
     for (final match in matches) {
       String numStr = match.group(0)!;
+      final matchStart = match.start;
 
       // Skip if this looks like a year (2020-2030 range)
       if (RegExp(r'^20[2-3]\d$').hasMatch(numStr)) {
         continue;
       }
 
+      // Skip if preceded by letters (likely an ID like B123123, A0420264337110)
+      if (matchStart > 0 && RegExp(r'[A-Za-z]').hasMatch(normalizedText[matchStart - 1])) {
+        continue;
+      }
+
+      // Skip invoice/reference numbers (long digit sequences without separators)
+      final digitsOnly = numStr.replaceAll(RegExp(r'[^\d]'), '');
+      if (digitsOnly.length > 6 && !numStr.contains(',') && !numStr.contains('.')) {
+        continue;
+      }
+
       // Determine if last separator is decimal point
-      // If number has two separators of different types, the last one is decimal
       final lastComma = numStr.lastIndexOf(',');
       final lastPeriod = numStr.lastIndexOf('.');
 
@@ -197,7 +228,7 @@ class OCRService {
       }
 
       final parsed = double.tryParse(numStr);
-      if (parsed != null) {
+      if (parsed != null && parsed >= 0.01 && parsed < 10000000) {
         numbers.add(parsed);
       }
     }
