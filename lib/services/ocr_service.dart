@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class OCRService {
@@ -41,7 +40,6 @@ class OCRService {
   }
 
   static double? extractTotalAmount(String text) {
-    final lowerText = text.toLowerCase();
     final keywords = ['total', 'টোটাল', 'মোট', 'amount', 'টাকা'];
 
     final lines = text.split('\n');
@@ -71,7 +69,6 @@ class OCRService {
   }
 
   static double? extractTaxAmount(String text) {
-    final lowerText = text.toLowerCase();
     final keywords = ['vat', 'ভ্যাট', 'tax', 'কর'];
 
     final lines = text.split('\n');
@@ -81,12 +78,12 @@ class OCRService {
       if (keywords.any((keyword) => line.contains(keyword))) {
         final numbers = _extractNumbers(lines[i]);
         if (numbers.isNotEmpty) {
-          return numbers.first;
+          return numbers.reduce((a, b) => a > b ? a : b);
         }
         if (i + 1 < lines.length) {
           final nextNumbers = _extractNumbers(lines[i + 1]);
           if (nextNumbers.isNotEmpty) {
-            return nextNumbers.first;
+            return nextNumbers.reduce((a, b) => a > b ? a : b);
           }
         }
       }
