@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.area59.ocr_app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34  // Updated to fix lStar resource issue
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -32,6 +32,14 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+
+            // Enable ProGuard/R8 minification
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
