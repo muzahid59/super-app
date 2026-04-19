@@ -56,5 +56,65 @@ void main() {
       expect(updated.date, DateTime(2026, 4, 17));
       expect(updated.paymentMethod, 'Cash');
     });
+
+    test('should be equal when ids match', () {
+      final transaction1 = Transaction(
+        id: '123',
+        merchantName: 'Store A',
+        totalAmount: 100.0,
+        date: DateTime(2026, 4, 19),
+        paymentMethod: 'Cash',
+      );
+
+      final transaction2 = Transaction(
+        id: '123',
+        merchantName: 'Store B', // Different data
+        totalAmount: 200.0,
+        date: DateTime(2026, 4, 18),
+        paymentMethod: 'Card',
+      );
+
+      expect(transaction1, equals(transaction2));
+      expect(transaction1.hashCode, equals(transaction2.hashCode));
+    });
+
+    test('should not be equal when ids differ', () {
+      final transaction1 = Transaction(
+        id: '123',
+        merchantName: 'Same Store',
+        totalAmount: 100.0,
+        date: DateTime(2026, 4, 19),
+        paymentMethod: 'Cash',
+      );
+
+      final transaction2 = Transaction(
+        id: '456',
+        merchantName: 'Same Store',
+        totalAmount: 100.0,
+        date: DateTime(2026, 4, 19),
+        paymentMethod: 'Cash',
+      );
+
+      expect(transaction1, isNot(equals(transaction2)));
+    });
+
+    test('should have consistent toString output', () {
+      final transaction = Transaction(
+        id: '123',
+        merchantName: 'Test Store',
+        totalAmount: 100.50,
+        date: DateTime(2026, 4, 19),
+        paymentMethod: 'Cash',
+      );
+
+      expect(
+        transaction.toString(),
+        contains('Transaction(id: 123'),
+      );
+      expect(
+        transaction.toString(),
+        contains('merchantName: Test Store'),
+      );
+    });
   });
 }
