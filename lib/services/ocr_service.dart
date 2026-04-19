@@ -184,6 +184,41 @@ class OCRService {
   }
 
   static DateTime? extractDate(String text) {
+    // Pattern 1: DD-MMM-YYYY (08-APR-2026)
+    final monthNames = {
+      'jan': 1, 'january': 1,
+      'feb': 2, 'february': 2,
+      'mar': 3, 'march': 3,
+      'apr': 4, 'april': 4,
+      'may': 5,
+      'jun': 6, 'june': 6,
+      'jul': 7, 'july': 7,
+      'aug': 8, 'august': 8,
+      'sep': 9, 'september': 9,
+      'oct': 10, 'october': 10,
+      'nov': 11, 'november': 11,
+      'dec': 12, 'december': 12,
+    };
+
+    // Try DD-MMM-YYYY format first
+    final monthPattern = RegExp(r'(\d{1,2})[\/\-]([a-zA-Z]{3,9})[\/\-](\d{4})', caseSensitive: false);
+    final monthMatch = monthPattern.firstMatch(text);
+    if (monthMatch != null) {
+      try {
+        final day = int.parse(monthMatch.group(1)!);
+        final monthStr = monthMatch.group(2)!.toLowerCase();
+        final year = int.parse(monthMatch.group(3)!);
+        final month = monthNames[monthStr];
+
+        if (month != null && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          return DateTime(year, month, day);
+        }
+      } catch (e) {
+        // Continue to next pattern
+      }
+    }
+
+    // Pattern 2: DD/MM/YYYY or DD-MM-YYYY
     final datePatterns = [
       RegExp(r'(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})'),
       RegExp(r'(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2})'),
