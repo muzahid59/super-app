@@ -36,4 +36,18 @@ class Transaction {
       imagePath: imagePath ?? this.imagePath,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Transaction &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+
+  @override
+  String toString() =>
+      'Transaction(id: $id, merchantName: $merchantName, totalAmount: $totalAmount, date: $date)';
 }
