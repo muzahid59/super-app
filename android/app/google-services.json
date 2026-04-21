@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "370409160399",
+    "project_id": "receipt-manager-ebbdf",
+    "storage_bucket": "receipt-manager-ebbdf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:370409160399:android:e75f1a4ed5a53241e001ba",
+        "android_client_info": {
+          "package_name": "com.area59.ocr_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJSsR4CFN_Y1r_TCPIajLfBy7lFkKwRGc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
