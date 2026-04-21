@@ -10,7 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _phoneController = TextEditingController(text: '+88');
+  final _phoneController = TextEditingController(text: '+8801744813601');
   final _formKey = GlobalKey<FormState>();
 
   @override
