@@ -105,14 +105,25 @@ class TransactionListScreen extends StatelessWidget {
                     arguments: transaction,
                   );
                 },
-                onDelete: () {
-                  provider.deleteTransaction(transaction.id);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Transaction deleted'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                onDelete: () async {
+                  try {
+                    await provider.deleteTransaction(transaction.id);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Transaction deleted'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to delete: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 },
               );
             },
