@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
@@ -6,6 +7,7 @@ import 'providers/auth_provider.dart';
 import 'providers/transaction_provider.dart';
 import 'repositories/firebase/firestore_session_repository.dart';
 import 'repositories/firebase/firestore_user_repository.dart';
+import 'repositories/firebase/firestore_transaction_repository.dart';
 import 'screens/login_screen.dart';
 import 'screens/otp_screen.dart';
 import 'screens/register_screen.dart';
@@ -17,6 +19,7 @@ import 'services/auth/firebase/firebase_auth_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
   runApp(const MyApp());
 }
 
@@ -34,7 +37,11 @@ class MyApp extends StatelessWidget {
             sessionRepo: FirestoreSessionRepository(),
           ),
         ),
-        ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        ChangeNotifierProvider(
+          create: (_) => TransactionProvider(
+            repository: FirestoreTransactionRepository(),
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'Receipt Scanner',
@@ -74,8 +81,12 @@ class _AuthGateState extends State<_AuthGate> {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
+        final transactionProvider = context.read<TransactionProvider>();
         switch (auth.state) {
           case AuthState.authenticated:
+            if (auth.currentUser != null) {
+              transactionProvider.setUser(auth.currentUser!.uid);
+            }
             return const TransactionListScreen();
           case AuthState.otpSent:
             return const OtpScreen();
@@ -88,6 +99,7 @@ class _AuthGateState extends State<_AuthGate> {
             );
           case AuthState.unauthenticated:
           case AuthState.error:
+            transactionProvider.clearUser();
             return const LoginScreen();
         }
       },

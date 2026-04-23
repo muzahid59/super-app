@@ -132,7 +132,7 @@ class _ReviewEditScreenState extends State<ReviewEditScreen> {
     }
   }
 
-  void _saveTransaction() {
+  Future<void> _saveTransaction() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -151,19 +151,31 @@ class _ReviewEditScreenState extends State<ReviewEditScreen> {
       imagePath: _imagePath,
     );
 
-    if (_isEditMode) {
-      provider.updateTransaction(transaction);
+    try {
+      if (_isEditMode) {
+        await provider.updateTransaction(transaction);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction updated')),
+        );
+      } else {
+        await provider.addTransaction(transaction);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction saved')),
+        );
+      }
+
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Transaction updated')),
-      );
-    } else {
-      provider.addTransaction(transaction);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Transaction saved')),
+        SnackBar(
+          content: Text('Failed to save: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
-
-    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   void _retakePhoto() {

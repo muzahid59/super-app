@@ -1,30 +1,65 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/transaction.dart';
+import '../repositories/transaction_repository.dart';
 
 class TransactionProvider extends ChangeNotifier {
-  final List<Transaction> _transactions = [];
+  final TransactionRepository _repository;
+  List<Transaction> _transactions = [];
+  String? _uid;
+  StreamSubscription<List<Transaction>>? _subscription;
 
-  List<Transaction> get transactions {
-    final sorted = List<Transaction>.from(_transactions);
-    sorted.sort((a, b) => b.date.compareTo(a.date));
-    return sorted;
+  TransactionProvider({required TransactionRepository repository})
+      : _repository = repository;
+
+  List<Transaction> get transactions => List.unmodifiable(_transactions);
+
+  void setUser(String uid) {
+    if (_uid == uid) return;
+    _subscription?.cancel();
+    _uid = uid;
+    _subscription = _repository.watchTransactions(uid).listen(
+      (transactions) {
+        _transactions = transactions;
+        notifyListeners();
+      },
+      onError: (error) {
+        debugPrint('Transaction stream error: $error');
+      },
+    );
   }
 
-  void addTransaction(Transaction transaction) {
-    _transactions.add(transaction);
+  void clearUser() {
+    if (_uid == null) return;
+    _subscription?.cancel();
+    _subscription = null;
+    _uid = null;
+    _transactions = [];
     notifyListeners();
   }
 
-  void updateTransaction(Transaction transaction) {
-    final index = _transactions.indexWhere((t) => t.id == transaction.id);
-    if (index != -1) {
-      _transactions[index] = transaction;
-      notifyListeners();
+  Future<void> addTransaction(Transaction transaction) {
+    return _repository.addTransaction(_requireUid(), transaction);
+  }
+
+  Future<void> updateTransaction(Transaction transaction) {
+    return _repository.updateTransaction(_requireUid(), transaction);
+  }
+
+  Future<void> deleteTransaction(String id) {
+    return _repository.deleteTransaction(_requireUid(), id);
+  }
+
+  String _requireUid() {
+    if (_uid == null) {
+      throw StateError('No user set. Call setUser() before performing operations.');
     }
+    return _uid!;
   }
 
-  void deleteTransaction(String id) {
-    _transactions.removeWhere((t) => t.id == id);
-    notifyListeners();
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }
