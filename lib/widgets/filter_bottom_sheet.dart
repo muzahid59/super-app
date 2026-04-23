@@ -16,7 +16,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   late DateRange? _selectedDateRange;
   String? _selectedDatePreset;
 
-  static const _paymentMethods = ['Cash', 'Card', 'Mobile Banking', 'Other'];
+  static const _paymentMethods = ['Cash', 'Card', 'Mobile Banking'];
   static const _datePresets = [
     'Today',
     'This Week',

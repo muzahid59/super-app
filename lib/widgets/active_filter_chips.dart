@@ -12,13 +12,6 @@ class ActiveFilterChips extends StatelessWidget {
     final state = provider.filterState;
     final chips = <Widget>[];
 
-    if (state.searchQuery.isNotEmpty) {
-      chips.add(_buildChip(
-        label: '"${state.searchQuery}"',
-        onRemove: () => provider.setSearchQuery(''),
-      ));
-    }
-
     for (final method in state.paymentMethods) {
       chips.add(_buildChip(
         label: method,
@@ -43,10 +36,29 @@ class ActiveFilterChips extends StatelessWidget {
       ));
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(children: chips),
+    if (chips.isEmpty) return const SizedBox.shrink();
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text(
+              'Filter by',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(width: 8),
+            ...chips,
+          ],
+        ),
+      ),
     );
   }
 

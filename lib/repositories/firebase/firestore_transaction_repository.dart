@@ -13,7 +13,7 @@ class FirestoreTransactionRepository implements TransactionRepository {
   @override
   Stream<List<models.Transaction>> watchTransactions(String uid) {
     return _collection(uid)
-        .orderBy('date', descending: true)
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {

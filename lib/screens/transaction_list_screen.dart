@@ -7,8 +7,21 @@ import '../widgets/filter_bottom_sheet.dart';
 import '../widgets/transaction_card.dart';
 import '../widgets/empty_state.dart';
 
-class TransactionListScreen extends StatelessWidget {
+class TransactionListScreen extends StatefulWidget {
   const TransactionListScreen({super.key});
+
+  @override
+  State<TransactionListScreen> createState() => _TransactionListScreenState();
+}
+
+class _TransactionListScreenState extends State<TransactionListScreen> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,12 +116,30 @@ class TransactionListScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: TextField(
+                        controller: _searchController,
                         onChanged: provider.setSearchQuery,
                         decoration: InputDecoration(
                           hintText: 'Search merchant...',
                           prefixIcon: const Icon(Icons.search),
+                          suffixIcon: provider.filterState.searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.close, size: 20),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    provider.setSearchQuery('');
+                                  },
+                                )
+                              : null,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF2196F3)),
                           ),
                           contentPadding: const EdgeInsets.symmetric(vertical: 0),
                           isDense: true,
