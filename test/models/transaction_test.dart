@@ -116,5 +116,93 @@ void main() {
         contains('merchantName: Test Store'),
       );
     });
+
+    test('toMap should serialize all fields', () {
+      final date = DateTime(2026, 4, 19, 10, 30);
+      final transaction = Transaction(
+        id: 'abc-123',
+        merchantName: 'Star Kabab',
+        totalAmount: 450.75,
+        date: date,
+        paymentMethod: 'Card',
+        taxAmount: 22.5,
+        imagePath: '/local/receipt.jpg',
+      );
+
+      final map = transaction.toMap();
+
+      expect(map['merchantName'], 'Star Kabab');
+      expect(map['totalAmount'], 450.75);
+      expect(map['date'], date);
+      expect(map['paymentMethod'], 'Card');
+      expect(map['taxAmount'], 22.5);
+      expect(map['imagePath'], '/local/receipt.jpg');
+      expect(map.containsKey('id'), false);
+    });
+
+    test('toMap should exclude null optional fields', () {
+      final transaction = Transaction(
+        id: 'abc-123',
+        merchantName: 'Store',
+        totalAmount: 100.0,
+        date: DateTime(2026, 4, 19),
+        paymentMethod: 'Cash',
+      );
+
+      final map = transaction.toMap();
+
+      expect(map.containsKey('taxAmount'), false);
+      expect(map.containsKey('imagePath'), false);
+    });
+
+    test('fromMap should deserialize all fields', () {
+      final date = DateTime(2026, 4, 19, 10, 30);
+      final map = {
+        'merchantName': 'Star Kabab',
+        'totalAmount': 450.75,
+        'date': date,
+        'paymentMethod': 'Card',
+        'taxAmount': 22.5,
+        'imagePath': '/local/receipt.jpg',
+      };
+
+      final transaction = Transaction.fromMap('abc-123', map);
+
+      expect(transaction.id, 'abc-123');
+      expect(transaction.merchantName, 'Star Kabab');
+      expect(transaction.totalAmount, 450.75);
+      expect(transaction.date, date);
+      expect(transaction.paymentMethod, 'Card');
+      expect(transaction.taxAmount, 22.5);
+      expect(transaction.imagePath, '/local/receipt.jpg');
+    });
+
+    test('fromMap should handle null optional fields', () {
+      final map = {
+        'merchantName': 'Store',
+        'totalAmount': 100.0,
+        'date': DateTime(2026, 4, 19),
+        'paymentMethod': 'Cash',
+      };
+
+      final transaction = Transaction.fromMap('xyz-789', map);
+
+      expect(transaction.taxAmount, null);
+      expect(transaction.imagePath, null);
+    });
+
+    test('fromMap should handle Timestamp date field', () {
+      final date = DateTime(2026, 4, 19);
+      final map = {
+        'merchantName': 'Store',
+        'totalAmount': 100.0,
+        'date': date,
+        'paymentMethod': 'Cash',
+      };
+
+      final transaction = Transaction.fromMap('id-1', map);
+
+      expect(transaction.date, date);
+    });
   });
 }

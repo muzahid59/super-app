@@ -37,6 +37,33 @@ class Transaction {
     );
   }
 
+  Map<String, dynamic> toMap() {
+    return {
+      'merchantName': merchantName,
+      'totalAmount': totalAmount,
+      'date': date,
+      'paymentMethod': paymentMethod,
+      if (taxAmount != null) 'taxAmount': taxAmount,
+      if (imagePath != null) 'imagePath': imagePath,
+    };
+  }
+
+  factory Transaction.fromMap(String id, Map<String, dynamic> map) {
+    return Transaction(
+      id: id,
+      merchantName: map['merchantName'] as String,
+      totalAmount: (map['totalAmount'] as num).toDouble(),
+      date: map['date'] is DateTime
+          ? map['date'] as DateTime
+          : (map['date'] as dynamic).toDate() as DateTime,
+      paymentMethod: map['paymentMethod'] as String,
+      taxAmount: map['taxAmount'] != null
+          ? (map['taxAmount'] as num).toDouble()
+          : null,
+      imagePath: map['imagePath'] as String?,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
