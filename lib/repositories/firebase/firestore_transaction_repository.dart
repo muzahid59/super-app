@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../../models/transaction.dart' as models;
 import '../transaction_repository.dart';
 
@@ -26,18 +27,26 @@ class FirestoreTransactionRepository implements TransactionRepository {
     final data = transaction.toMap();
     data['createdAt'] = FieldValue.serverTimestamp();
     data['updatedAt'] = FieldValue.serverTimestamp();
-    await _collection(uid).doc(transaction.id).set(data);
+    // Don't await — Firestore writes to local cache immediately with
+    // persistence enabled. Awaiting throws gRPC UNAVAILABLE when offline.
+    _collection(uid).doc(transaction.id).set(data).catchError((e) {
+      debugPrint('Firestore addTransaction sync error: $e');
+    });
   }
 
   @override
   Future<void> updateTransaction(String uid, models.Transaction transaction) async {
     final data = transaction.toMap();
     data['updatedAt'] = FieldValue.serverTimestamp();
-    await _collection(uid).doc(transaction.id).update(data);
+    _collection(uid).doc(transaction.id).update(data).catchError((e) {
+      debugPrint('Firestore updateTransaction sync error: $e');
+    });
   }
 
   @override
   Future<void> deleteTransaction(String uid, String transactionId) async {
-    await _collection(uid).doc(transactionId).delete();
+    _collection(uid).doc(transactionId).delete().catchError((e) {
+      debugPrint('Firestore deleteTransaction sync error: $e');
+    });
   }
 }
