@@ -161,6 +161,23 @@ void main() {
       expect(watchCalls[1]['uid'], 'user-222');
     });
 
+    test('setUser with same uid should not resubscribe', () {
+      provider.setUser('user-123');
+      provider.setUser('user-123');
+
+      final watchCalls = mockRepo.calls.where((c) => c['method'] == 'watchTransactions').toList();
+      expect(watchCalls.length, 1);
+    });
+
+    test('clearUser when already cleared should be no-op', () async {
+      var notifyCount = 0;
+      provider.addListener(() => notifyCount++);
+
+      provider.clearUser();
+
+      expect(notifyCount, 0);
+    });
+
     test('addTransaction should throw if no user set', () {
       final transaction = Transaction(
         id: '1',

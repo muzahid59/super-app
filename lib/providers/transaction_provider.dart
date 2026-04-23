@@ -15,15 +15,22 @@ class TransactionProvider extends ChangeNotifier {
   List<Transaction> get transactions => List.unmodifiable(_transactions);
 
   void setUser(String uid) {
+    if (_uid == uid) return;
     _subscription?.cancel();
     _uid = uid;
-    _subscription = _repository.watchTransactions(uid).listen((transactions) {
-      _transactions = transactions;
-      notifyListeners();
-    });
+    _subscription = _repository.watchTransactions(uid).listen(
+      (transactions) {
+        _transactions = transactions;
+        notifyListeners();
+      },
+      onError: (error) {
+        debugPrint('Transaction stream error: $error');
+      },
+    );
   }
 
   void clearUser() {
+    if (_uid == null) return;
     _subscription?.cancel();
     _subscription = null;
     _uid = null;
