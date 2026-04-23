@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ocr_app/models/transaction.dart';
+import 'package:superapp/models/transaction.dart';
 
 void main() {
   group('Transaction Model', () {

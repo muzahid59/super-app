@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ocr_app/models/transaction.dart';
-import 'package:ocr_app/providers/transaction_provider.dart';
-import 'package:ocr_app/repositories/transaction_repository.dart';
+import 'package:superapp/models/transaction.dart';
+import 'package:superapp/providers/transaction_provider.dart';
+import 'package:superapp/repositories/transaction_repository.dart';
 
 class MockTransactionRepository implements TransactionRepository {
   final _controller = StreamController<List<Transaction>>.broadcast();

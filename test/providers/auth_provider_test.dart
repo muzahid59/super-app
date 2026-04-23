@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ocr_app/models/user_model.dart';
-import 'package:ocr_app/providers/auth_provider.dart';
-import 'package:ocr_app/repositories/session_repository.dart';
-import 'package:ocr_app/repositories/user_repository.dart';
-import 'package:ocr_app/services/auth/auth_service.dart';
+import 'package:superapp/models/user_model.dart';
+import 'package:superapp/providers/auth_provider.dart';
+import 'package:superapp/repositories/session_repository.dart';
+import 'package:superapp/repositories/user_repository.dart';
+import 'package:superapp/services/auth/auth_service.dart';
 
 // ---- Fakes ----
 

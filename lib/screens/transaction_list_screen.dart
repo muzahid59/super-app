@@ -17,7 +17,7 @@ class TransactionListScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Receipt Scanner'),
+        title: const Text('Super App'),
         backgroundColor: const Color(0xFF2196F3),
         foregroundColor: Colors.white,
       ),

@@ -7,7 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ocr_app/main.dart';
+import 'package:superapp/main.dart';
 
 void main() {
   testWidgets('Receipt Scanner app smoke test', (WidgetTester tester) async {

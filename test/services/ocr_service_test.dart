@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ocr_app/services/ocr_service.dart';
+import 'package:superapp/services/ocr_service.dart';
 
 void main() {
   group('OCRService', () {
