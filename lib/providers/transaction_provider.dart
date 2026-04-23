@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../models/filter_state.dart';
 import '../models/transaction.dart';
 import '../repositories/transaction_repository.dart';
 
 class TransactionProvider extends ChangeNotifier {
   final TransactionRepository _repository;
   List<Transaction> _transactions = [];
+  FilterState _filterState = const FilterState();
   String? _uid;
   StreamSubscription<List<Transaction>>? _subscription;
 
@@ -13,6 +15,85 @@ class TransactionProvider extends ChangeNotifier {
       : _repository = repository;
 
   List<Transaction> get transactions => List.unmodifiable(_transactions);
+
+  FilterState get filterState => _filterState;
+
+  bool get hasActiveFilters => _filterState.hasActiveFilters;
+
+  int get activeFilterCount => _filterState.activeFilterCount;
+
+  List<Transaction> get filteredTransactions {
+    if (!_filterState.hasActiveFilters) {
+      return List.unmodifiable(_transactions);
+    }
+
+    var result = _transactions.where((t) {
+      if (_filterState.searchQuery.isNotEmpty) {
+        if (!t.merchantName
+            .toLowerCase()
+            .contains(_filterState.searchQuery.toLowerCase())) {
+          return false;
+        }
+      }
+
+      if (_filterState.paymentMethods.isNotEmpty) {
+        if (!_filterState.paymentMethods.contains(t.paymentMethod)) {
+          return false;
+        }
+      }
+
+      if (_filterState.amountRange != null) {
+        if (!_filterState.amountRange!.matches(t.totalAmount)) {
+          return false;
+        }
+      }
+
+      if (_filterState.dateRange != null) {
+        if (!_filterState.dateRange!.contains(t.date)) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList();
+
+    return List.unmodifiable(result);
+  }
+
+  void setSearchQuery(String query) {
+    _filterState = _filterState.copyWith(searchQuery: query);
+    notifyListeners();
+  }
+
+  void togglePaymentMethod(String method) {
+    final methods = Set<String>.from(_filterState.paymentMethods);
+    if (methods.contains(method)) {
+      methods.remove(method);
+    } else {
+      methods.add(method);
+    }
+    _filterState = _filterState.copyWith(paymentMethods: methods);
+    notifyListeners();
+  }
+
+  void setAmountRange(AmountRange? range) {
+    _filterState = _filterState.copyWith(amountRange: () => range);
+    notifyListeners();
+  }
+
+  void setDateRange(DateTime? start, DateTime? end) {
+    _filterState = _filterState.copyWith(
+      dateRange: () => (start != null && end != null)
+          ? DateRange(start: start, end: end)
+          : null,
+    );
+    notifyListeners();
+  }
+
+  void clearFilters() {
+    _filterState = const FilterState();
+    notifyListeners();
+  }
 
   void setUser(String uid) {
     if (_uid == uid) return;
@@ -35,6 +116,7 @@ class TransactionProvider extends ChangeNotifier {
     _subscription = null;
     _uid = null;
     _transactions = [];
+    _filterState = const FilterState();
     notifyListeners();
   }
 

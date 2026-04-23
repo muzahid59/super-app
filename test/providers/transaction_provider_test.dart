@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:superapp/models/filter_state.dart';
 import 'package:superapp/models/transaction.dart';
 import 'package:superapp/providers/transaction_provider.dart';
 import 'package:superapp/repositories/transaction_repository.dart';
@@ -191,6 +192,204 @@ void main() {
         () => provider.addTransaction(transaction),
         throwsStateError,
       );
+    });
+
+    group('filtering', () {
+      final transactions = [
+        Transaction(
+          id: '1',
+          merchantName: 'Super Market',
+          totalAmount: 250.0,
+          date: DateTime(2026, 4, 20),
+          paymentMethod: 'Cash',
+        ),
+        Transaction(
+          id: '2',
+          merchantName: 'City Hospital',
+          totalAmount: 1500.0,
+          date: DateTime(2026, 4, 15),
+          paymentMethod: 'Card',
+        ),
+        Transaction(
+          id: '3',
+          merchantName: 'Mobile Store',
+          totalAmount: 8000.0,
+          date: DateTime(2026, 3, 10),
+          paymentMethod: 'Mobile Banking',
+        ),
+        Transaction(
+          id: '4',
+          merchantName: 'Super Shop',
+          totalAmount: 750.0,
+          date: DateTime(2026, 4, 1),
+          paymentMethod: 'Cash',
+        ),
+      ];
+
+      setUp(() {
+        provider.setUser('user-123');
+        mockRepo.emitTransactions(transactions);
+      });
+
+      test('filteredTransactions returns all when no filters active', () async {
+        await Future.delayed(Duration.zero);
+
+        expect(provider.filteredTransactions.length, 4);
+      });
+
+      test('setSearchQuery filters by merchant name case-insensitive', () async {
+        await Future.delayed(Duration.zero);
+
+        provider.setSearchQuery('super');
+
+        expect(provider.filteredTransactions.length, 2);
+        expect(provider.filteredTransactions[0].merchantName, 'Super Market');
+        expect(provider.filteredTransactions[1].merchantName, 'Super Shop');
+      });
+
+      test('setSearchQuery with empty string shows all', () async {
+        await Future.delayed(Duration.zero);
+
+        provider.setSearchQuery('super');
+        provider.setSearchQuery('');
+
+        expect(provider.filteredTransactions.length, 4);
+      });
+
+      test('togglePaymentMethod adds and removes from set', () async {
+        await Future.delayed(Duration.zero);
+
+        provider.togglePaymentMethod('Cash');
+        expect(provider.filteredTransactions.length, 2);
+
+        provider.togglePaymentMethod('Card');
+        expect(provider.filteredTransactions.length, 3);
+
+        provider.togglePaymentMethod('Cash');
+        expect(provider.filteredTransactions.length, 1);
+        expect(provider.filteredTransactions.first.paymentMethod, 'Card');
+      });
+
+      test('setAmountRange filters by amount range', () async {
+        await Future.delayed(Duration.zero);
+
+        provider.setAmountRange(AmountRange.under500);
+        expect(provider.filteredTransactions.length, 1);
+        expect(provider.filteredTransactions.first.merchantName, 'Super Market');
+
+        provider.setAmountRange(AmountRange.above5000);
+        expect(provider.filteredTransactions.length, 1);
+        expect(provider.filteredTransactions.first.merchantName, 'Mobile Store');
+      });
+
+      test('setAmountRange with null clears amount filter', () async {
+        await Future.delayed(Duration.zero);
+
+        provider.setAmountRange(AmountRange.under500);
+        expect(provider.filteredTransactions.length, 1);
+
+        provider.setAmountRange(null);
+        expect(provider.filteredTransactions.length, 4);
+      });
+
+      test('setDateRange filters by date range inclusive', () async {
+        await Future.delayed(Duration.zero);
+
+        provider.setDateRange(DateTime(2026, 4, 1), DateTime(2026, 4, 20));
+
+        expect(provider.filteredTransactions.length, 3);
+        expect(
+          provider.filteredTransactions.every((t) =>
+            !t.date.isBefore(DateTime(2026, 4, 1)) &&
+            !t.date.isAfter(DateTime(2026, 4, 20))),
+          isTrue,
+        );
+      });
+
+      test('setDateRange with nulls clears date filter', () async {
+        await Future.delayed(Duration.zero);
+
+        provider.setDateRange(DateTime(2026, 4, 15), DateTime(2026, 4, 20));
+        expect(provider.filteredTransactions.length, 2);
+
+        provider.setDateRange(null, null);
+        expect(provider.filteredTransactions.length, 4);
+      });
+
+      test('filters combine with AND logic', () async {
+        await Future.delayed(Duration.zero);
+
+        provider.setSearchQuery('super');
+        provider.togglePaymentMethod('Cash');
+
+        expect(provider.filteredTransactions.length, 2);
+        expect(provider.filteredTransactions[0].merchantName, 'Super Market');
+        expect(provider.filteredTransactions[1].merchantName, 'Super Shop');
+
+        provider.setAmountRange(AmountRange.under500);
+
+        expect(provider.filteredTransactions.length, 1);
+        expect(provider.filteredTransactions.first.merchantName, 'Super Market');
+      });
+
+      test('clearFilters resets all filters', () async {
+        await Future.delayed(Duration.zero);
+
+        provider.setSearchQuery('super');
+        provider.togglePaymentMethod('Cash');
+        provider.setAmountRange(AmountRange.under500);
+        provider.setDateRange(DateTime(2026, 4, 1), DateTime(2026, 4, 30));
+
+        provider.clearFilters();
+
+        expect(provider.filteredTransactions.length, 4);
+        expect(provider.filterState.searchQuery, '');
+        expect(provider.filterState.paymentMethods, isEmpty);
+        expect(provider.filterState.amountRange, isNull);
+        expect(provider.filterState.dateRange, isNull);
+      });
+
+      test('hasActiveFilters reflects filter state', () async {
+        await Future.delayed(Duration.zero);
+
+        expect(provider.hasActiveFilters, isFalse);
+
+        provider.setSearchQuery('test');
+        expect(provider.hasActiveFilters, isTrue);
+
+        provider.clearFilters();
+        expect(provider.hasActiveFilters, isFalse);
+      });
+
+      test('activeFilterCount counts active categories', () async {
+        await Future.delayed(Duration.zero);
+
+        expect(provider.activeFilterCount, 0);
+
+        provider.setSearchQuery('test');
+        expect(provider.activeFilterCount, 1);
+
+        provider.togglePaymentMethod('Cash');
+        expect(provider.activeFilterCount, 2);
+
+        provider.setAmountRange(AmountRange.under500);
+        expect(provider.activeFilterCount, 3);
+
+        provider.setDateRange(DateTime(2026, 4, 1), DateTime(2026, 4, 30));
+        expect(provider.activeFilterCount, 4);
+      });
+
+      test('clearUser also resets filters', () async {
+        await Future.delayed(Duration.zero);
+
+        provider.setSearchQuery('test');
+        provider.togglePaymentMethod('Cash');
+
+        provider.clearUser();
+
+        expect(provider.hasActiveFilters, isFalse);
+        expect(provider.filteredTransactions, isEmpty);
+      });
     });
   });
 }
